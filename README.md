@@ -1,9 +1,9 @@
 # spring-social-odnoklassniki
 Spring social OAuth authentication for odnoklassniki.ru
 
-Using of the plugin
+Using of the plugin:
 
-Define bean in some Spring xml cpntext file:
+Define bean in some Spring xml context file:
 
 	<bean id="connectionFactoryLocator" class="org.springframework.social.security.SocialAuthenticationServiceRegistry">
       <property name="authenticationServices">
