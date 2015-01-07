@@ -15,19 +15,42 @@
  */
 package org.springframework.social.odnoklassniki.api;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.social.*;
-import org.springframework.web.client.DefaultResponseErrorHandler;
-
 import java.io.IOException;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.social.InternalServerErrorException;
+import org.springframework.social.NotAuthorizedException;
+import org.springframework.social.OperationNotPermittedException;
+import org.springframework.social.ResourceNotFoundException;
+import org.springframework.social.ServerDownException;
+import org.springframework.social.ServerOverloadedException;
+import org.springframework.social.UncategorizedApiException;
+import org.springframework.web.client.DefaultResponseErrorHandler;
+
 /**
- * Subclass of {@link DefaultResponseErrorHandler} that handles errors from Odnoklassnikiru's
- * API, interpreting them into appropriate exceptions.
+ * Subclass of {@link DefaultResponseErrorHandler} that handles errors from
+ * Odnoklassnikiru's API, interpreting them into appropriate exceptions.
+ * 
  * @author Cackle
  */
 public class OdnoklassnikiErrorHandler extends DefaultResponseErrorHandler {
+
+	private void handleClientErrors(ClientHttpResponse response)
+			throws IOException {
+		HttpStatus statusCode = response.getStatusCode();
+
+		if (statusCode == HttpStatus.UNAUTHORIZED) {
+			throw new NotAuthorizedException("odnoklassniki",
+					"User was not authorised.");
+		} else if (statusCode == HttpStatus.FORBIDDEN) {
+			throw new OperationNotPermittedException("odnoklassniki",
+					"User is forbidden to access this resource.");
+		} else if (statusCode == HttpStatus.NOT_FOUND) {
+			throw new ResourceNotFoundException("odnoklassniki",
+					"Resource was not found.");
+		}
+	}
 
 	@Override
 	public void handleError(ClientHttpResponse response) throws IOException {
@@ -38,33 +61,26 @@ public class OdnoklassnikiErrorHandler extends DefaultResponseErrorHandler {
 			handleClientErrors(response);
 		}
 
-		// if not otherwise handled, do default handling and wrap with UncategorizedApiException
+		// if not otherwise handled, do default handling and wrap with
+		// UncategorizedApiException
 		try {
 			super.handleError(response);
-		} catch(Exception e) {
-			throw new UncategorizedApiException("Error consuming Odnoklassnikiru REST API", e);
+		} catch (Exception e) {
+			throw new UncategorizedApiException("odnoklassniki",
+					"Error consuming Odnoklassnikiru REST API", e);
 		}
-	}
-
-	private void handleClientErrors(ClientHttpResponse response) throws IOException {
-		HttpStatus statusCode = response.getStatusCode();
-
-		if (statusCode == HttpStatus.UNAUTHORIZED) {
-			throw new NotAuthorizedException("User was not authorised.");
-		} else if (statusCode == HttpStatus.FORBIDDEN) {
-			throw new OperationNotPermittedException("User is forbidden to access this resource.");
-		} else if (statusCode == HttpStatus.NOT_FOUND) {
-			throw new ResourceNotFoundException("Resource was not found.");
-        }
 	}
 
 	private void handleServerErrors(HttpStatus statusCode) throws IOException {
 		if (statusCode == HttpStatus.INTERNAL_SERVER_ERROR) {
-			throw new InternalServerErrorException("Something is broken at Odnoklassnikiru.");
+			throw new InternalServerErrorException("odnoklassniki",
+					"Something is broken at Odnoklassnikiru.");
 		} else if (statusCode == HttpStatus.BAD_GATEWAY) {
-			throw new ServerDownException("Odnoklassnikiru is down or is being upgraded.");
+			throw new ServerDownException("odnoklassniki",
+					"Odnoklassnikiru is down or is being upgraded.");
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			throw new ServerOverloadedException("Odnoklassnikiru is overloaded with requests. Try again later.");
+			throw new ServerOverloadedException("odnoklassniki",
+					"Odnoklassnikiru is overloaded with requests. Try again later.");
 		}
 	}
 }

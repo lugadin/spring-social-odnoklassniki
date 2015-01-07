@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
 import org.springframework.social.MissingAuthorizationException;
 import org.springframework.util.DigestUtils;
 
@@ -36,10 +37,8 @@ public abstract class AbstractOdnoklassnikiOperations {
         params.put("format", "json");
     }
 
-    protected void requireAuthorization() {
-        if (!isAuthorized) {
-            throw new MissingAuthorizationException();
-        }
+    private String encodeSignarure(String sign) {
+        return DigestUtils.md5DigestAsHex(sign.getBytes()).toLowerCase();
     }
 
     protected String makeOperationURL(Map<String, String> params) {
@@ -61,7 +60,9 @@ public abstract class AbstractOdnoklassnikiOperations {
         return url.toString();
     }
 
-    private String encodeSignarure(String sign) {
-        return DigestUtils.md5DigestAsHex(sign.getBytes()).toLowerCase();
+    protected void requireAuthorization() {
+        if (!isAuthorized) {
+            throw new MissingAuthorizationException("odnoklassniki");
+        }
     }
 }
