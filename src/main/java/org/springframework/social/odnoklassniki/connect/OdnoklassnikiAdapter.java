@@ -15,6 +15,7 @@
  */
 package org.springframework.social.odnoklassniki.connect;
 
+import java.util.logging.Logger;
 import org.springframework.social.ApiException;
 import org.springframework.social.connect.ApiAdapter;
 import org.springframework.social.connect.ConnectionValues;
@@ -41,6 +42,8 @@ public class OdnoklassnikiAdapter implements ApiAdapter<Odnoklassniki> {
 
     @Override
     public void setConnectionValues(Odnoklassniki odnoklassnikiru, ConnectionValues values) {
+        
+        Logger.getGlobal().severe("setConnectionValues");
         OdnoklassnikiProfile profile = odnoklassnikiru.usersOperations().getProfile();
         values.setProviderUserId(profile.getUid());
         values.setDisplayName(profile.getFirstName() + " " + profile.getLastName());

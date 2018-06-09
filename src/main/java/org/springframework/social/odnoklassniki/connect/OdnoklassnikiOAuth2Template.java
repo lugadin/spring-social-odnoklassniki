@@ -15,16 +15,10 @@
  */
 package org.springframework.social.odnoklassniki.connect;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.social.oauth2.OAuth2Template;
-import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 /**
  * Odnoklassnikiru-specific extension of OAuth2Template.
@@ -36,31 +30,14 @@ public class OdnoklassnikiOAuth2Template extends OAuth2Template {
 
 	public OdnoklassnikiOAuth2Template(String clientId, String clientSecret) {
 		super(clientId, clientSecret, "http://www.odnoklassniki.ru/oauth/authorize", "http://api.odnoklassniki.ru/oauth/token.do");
-		setUseParametersForClientAuthentication(true);
+        setUseParametersForClientAuthentication(true);
 	}
 
     @Override
-    protected AccessGrant createAccessGrant(String accessToken, String scope, String refreshToken, Long expiresIn, Map<String, Object> response) {
+    protected AccessGrant createAccessGrant(String accessToken, String scope, String refreshToken, Long expiresIn,
+                                            Map<String, Object> response) {
         uid = (String) response.get("x_mailru_vid");
         return super.createAccessGrant(accessToken, scope, refreshToken, expiresIn, response);
-    }
-
-    @Override
-    protected RestTemplate createRestTemplate() {
-        RestTemplate restTemplate = super.createRestTemplate();
-
-        List<HttpMessageConverter<?>> converters = restTemplate.getMessageConverters();
-        for (HttpMessageConverter<?> converter : converters) {
-            if (converter instanceof MappingJackson2HttpMessageConverter) {
-                MappingJackson2HttpMessageConverter jsonConverter = (MappingJackson2HttpMessageConverter) converter;
-
-                List<MediaType> mTypes = new LinkedList<MediaType>(jsonConverter.getSupportedMediaTypes());
-                mTypes.add(new MediaType("text", "javascript", MappingJackson2HttpMessageConverter.DEFAULT_CHARSET));
-                jsonConverter.setSupportedMediaTypes(mTypes);
-            }
-        }
-
-        return restTemplate;
     }
 
     public String getUid() {

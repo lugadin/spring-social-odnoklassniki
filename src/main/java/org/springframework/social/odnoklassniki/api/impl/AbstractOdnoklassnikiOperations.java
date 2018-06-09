@@ -1,24 +1,20 @@
 package org.springframework.social.odnoklassniki.api.impl;
 
+import org.springframework.social.MissingAuthorizationException;
+import org.springframework.util.DigestUtils;
+
 import java.net.URLEncoder;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.springframework.social.MissingAuthorizationException;
-import org.springframework.util.DigestUtils;
+import static org.springframework.social.odnoklassniki.api.Odnoklassniki.PROVIDER_ID;
 
 public abstract class AbstractOdnoklassnikiOperations {
 
-    private static final String MAILRU_REST_URL = "http://api.odnoklassniki.ru/fb.do?";
+    private static final String ODNOKLASSNIKI_REST_URL = "http://api.odnoklassniki.ru/fb.do?";
 
-    private final SortedMap<String, String> params = new TreeMap<String, String>(new Comparator<String>() {
-        @Override
-        public int compare(String str, String str2) {
-            return str.compareTo(str2);
-        }
-    });
+    private final SortedMap<String, String> params = new TreeMap<String, String>();
 
     private final boolean isAuthorized;
 
@@ -26,7 +22,8 @@ public abstract class AbstractOdnoklassnikiOperations {
 
     private final String clientSecret;
 
-    public AbstractOdnoklassnikiOperations(String applicationKey, String clientSecret, String accessToken, boolean isAuthorized) {
+    public AbstractOdnoklassnikiOperations(String applicationKey, String clientSecret, String accessToken,
+                                           boolean isAuthorized) {
 
         this.isAuthorized = isAuthorized;
         this.accessToken = accessToken;
@@ -37,14 +34,16 @@ public abstract class AbstractOdnoklassnikiOperations {
         params.put("format", "json");
     }
 
-    private String encodeSignarure(String sign) {
-        return DigestUtils.md5DigestAsHex(sign.getBytes()).toLowerCase();
+    protected void requireAuthorization() {
+        if (!isAuthorized) {
+            throw new MissingAuthorizationException(PROVIDER_ID);
+        }
     }
 
     protected String makeOperationURL(Map<String, String> params) {
         this.params.putAll(params);
 
-        StringBuilder url = new StringBuilder(MAILRU_REST_URL);
+        StringBuilder url = new StringBuilder(ODNOKLASSNIKI_REST_URL);
         StringBuilder signature = new StringBuilder();
 
         for (String param : this.params.keySet()) {
@@ -54,15 +53,13 @@ public abstract class AbstractOdnoklassnikiOperations {
             }
             url.append(param).append("=").append(URLEncoder.encode(value)).append("&");
         }
-        signature.append(encodeSignarure(accessToken + clientSecret));
-        url.append("sig=").append(encodeSignarure(signature.toString()));
+        signature.append(encodeSignature(accessToken + clientSecret));
+        url.append("sig=").append(encodeSignature(signature.toString()));
 
         return url.toString();
     }
 
-    protected void requireAuthorization() {
-        if (!isAuthorized) {
-            throw new MissingAuthorizationException("odnoklassniki");
-        }
+    private String encodeSignature(String sign) {
+        return DigestUtils.md5DigestAsHex(sign.getBytes()).toLowerCase();
     }
 }
